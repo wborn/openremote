@@ -303,7 +303,7 @@ jobs:
                 for key in managerPushConfig.keys():
                   # Output new tag cache files (for generating hash)
                   os.system(f"echo 'Outputting manifest info for tag: {key}'")
-                  os.system(f"docker buildx imagetools inspect --raw openremote/manager:{key} > ~/manager-tags-new/{key}")
+                  os.system(f"docker buildx imagetools inspect --raw wborn/manager:{key} > ~/manager-tags-new/{key}")
               os.system("echo 'Tag manifests generated:'")
               os.system("find ~/manager-tags-new")
 
@@ -402,7 +402,7 @@ jobs:
             firstDockerTag = dockerPublishTags.split(",")[0]
             os.system(f"echo 'firstDockerTag={firstDockerTag}' >> $GITHUB_OUTPUT")
             os.system(f" echo 'Manager tags to push to docker: {dockerPublishTags}'")
-            dockerPublishTags = " ".join(map(lambda t: f"-t openremote/manager:{t.strip()}", dockerPublishTags.split(",")))
+            dockerPublishTags = " ".join(map(lambda t: f"-t wborn/manager:{t.strip()}", dockerPublishTags.split(",")))
             os.system(f"echo 'dockerTags={dockerPublishTags}' >> $GITHUB_OUTPUT")
 
           if mavenPublishTag is not None and isMainRepo == 'true':
@@ -491,7 +491,7 @@ jobs:
                 command="docker build --push --build-arg GIT_COMMIT=$commitSha --platform linux/amd64,linux/aarch64 $MANAGER_TAGS $buildPath"
                 echo "pushRequired=true" >> $GITHUB_OUTPUT
               else
-                command="docker build --build-arg GIT_COMMIT=$commitSha --platform linux/amd64,linux/aarch64 -t openremote/manager:$commitShaShort $buildPath"
+                command="docker build --build-arg GIT_COMMIT=$commitSha --platform linux/amd64,linux/aarch64 -t wborn/manager:$commitShaShort $buildPath"
               fi
               echo "value=$command" >> $GITHUB_OUTPUT
             fi
@@ -536,7 +536,7 @@ jobs:
             echo "refTag=$commitShaShort" >> $GITHUB_OUTPUT
 
             if [ -n "$DEPLOYMENTS" ]; then
-              command="docker build --build-arg GIT_COMMIT=$commitSha --platform linux/amd64,linux/aarch64 -t openremote/deployment:$commitShaShort $buildPath"
+              command="docker build --build-arg GIT_COMMIT=$commitSha --platform linux/amd64,linux/aarch64 -t wborn/deployment:$commitShaShort $buildPath"
               echo "value=$command" >> $GITHUB_OUTPUT
             fi
           fi
@@ -797,7 +797,7 @@ jobs:
           echo '  "https://registry.yarnpkg.com":' >> .yarnrc.yml
           echo "    npmAuthToken: $NPM_AUTH_TOKEN" >> .yarnrc.yml
 
-          yarn workspaces foreach --all --no-private --topological npm publish --tag $TAG
+          echo yarn workspaces foreach --all --no-private --topological npm publish --tag $TAG
         env:
           NPM_TAG: ${{ steps.ci-cd-output.outputs.npmTag }}
           NPM_AUTH_TOKEN: ${{ steps.inputs-and-secrets.outputs._TEMP_NPM_AUTH_TOKEN || steps.inputs-and-secrets.outputs.NPM_AUTH_TOKEN }}
@@ -917,7 +917,7 @@ jobs:
             # Execute deploy script
             os.system(f"echo 'Executing deploy script for deployment: managerTag={managerTag} deploymentTag={deploymentRef} environment={env}'")
             # Uncomment this in combination with the SSH debug step afterwards to debug deployment script
-            #sys.exit(0)
+            sys.exit(0)
             result = subprocess.run(f"bash {deployScript}", shell=True)
 
             if result.returncode != 0:

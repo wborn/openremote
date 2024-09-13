@@ -12,7 +12,7 @@ scmVersion {
     versionCreator('simple')
     versionIncrementer('incrementMinor')
     repository {
-        remote.set('origin')
+        remote.set('wborn')
     }
     tag {
         prefix.set('')
