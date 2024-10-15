@@ -943,6 +943,14 @@ jobs:
           IPV4: ${{ steps.ip-address.outputs.ipv4 }}
           IPV6: ${{ steps.ip-address.outputs.ipv6 }}
 
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
+        with:
+          ## limits ssh access and adds the ssh public keys of the listed GitHub users
+          limit-access-to-actor: true
+        env:
+          NPM_REGISTRY_SERVER: ${{ secrets.NPM_REGISTRY_SERVER }}
+
 #       - name: Setup upterm session
 #         uses: lhotari/action-upterm@v1
 #         with:
