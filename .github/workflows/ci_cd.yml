@@ -101,7 +101,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Cancel previous runs
         uses: styfle/cancel-workflow-action@0.12.1
         with:
@@ -943,8 +942,16 @@ jobs:
           IPV4: ${{ steps.ip-address.outputs.ipv4 }}
           IPV6: ${{ steps.ip-address.outputs.ipv6 }}
 
-#       - name: Setup upterm session
-#         uses: lhotari/action-upterm@v1
-#         with:
-#           ## limits ssh access and adds the ssh public keys of the listed GitHub users
-#           limit-access-to-actor: true
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
+        with:
+          ## limits ssh access and adds the ssh public keys of the listed GitHub users
+          limit-access-to-actor: true
+        env:
+          MAVEN_TAG: ${{ steps.ci-cd-output.outputs.mavenTag }}
+          MAVEN_SIGNING_PASSWORD: ${{ steps.inputs-and-secrets.outputs._TEMP_MAVEN_SIGNING_PASSWORD || steps.inputs-and-secrets.outputs.MAVEN_SIGNING_PASSWORD }}
+          MAVEN_SIGNING_KEY: ${{ steps.inputs-and-secrets.outputs._TEMP_MAVEN_SIGNING_KEY || steps.inputs-and-secrets.outputs.MAVEN_SIGNING_KEY }}
+          MAVEN_USERNAME: ${{ steps.inputs-and-secrets.outputs._TEMP_MAVEN_USERNAME || steps.inputs-and-secrets.outputs.MAVEN_USERNAME }}
+          MAVEN_PASSWORD: ${{ steps.inputs-and-secrets.outputs._TEMP_MAVEN_PASSWORD || steps.inputs-and-secrets.outputs.MAVEN_PASSWORD }}
+
+
