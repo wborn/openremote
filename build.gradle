@@ -36,22 +36,6 @@ nexusPublishing {
     }
 }
 
-apply plugin: 'pl.allegro.tech.build.axion-release'
-scmVersion {
-    releaseOnlyOnReleaseBranches = true
-    releaseBranchNames = ['main', 'master']
-    unshallowRepoOnCI.set(true)
-    versionCreator('simple')
-    versionIncrementer('incrementMinor')
-    repository {
-        remote.set('origin')
-    }
-    tag {
-        prefix.set('')
-        initialVersion({config, position -> '1.2.0'})
-    }
-}
-
 tasks.register('checkFilesGitIgnoredNew', Exec) {
     // The provided checkFilesGitIgnored task doesn't work on Windows so here's one that does
     def args = []

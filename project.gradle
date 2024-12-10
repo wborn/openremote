@@ -399,4 +399,22 @@ plugins.withType(JavaPlugin).whenPluginAdded {
     archivesBaseName = "${rootProject.name}${path.replaceAll(":", "-")}"
 }
 
+apply plugin: 'pl.allegro.tech.build.axion-release'
+
+scmVersion {
+    releaseOnlyOnReleaseBranches = true
+    releaseBranchNames = ['main', 'master', 'master-mine']
+    unshallowRepoOnCI.set(true)
+    versionCreator('simple')
+    versionIncrementer('incrementMinor')
+    repository {
+        remote.set('origin')
+    }
+    tag {
+        prefix.set('')
+        deserializer({config, position, tagName -> tagName.startsWith('v') ? '1.1.0' : tagName})
+        initialVersion({config, position -> '1.2.0'})
+    }
+}
+
 // POM generator
