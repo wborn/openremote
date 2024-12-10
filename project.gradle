@@ -18,7 +18,6 @@ import org.jetbrains.gradle.ext.JUnit
 // Configure versions in gradle.properties (putting a gradle.properties file
 // in a subproject only overrides root properties of same name for the actual
 // subproject, not for its children!)
-version = hasProperty("openremoteVersion") ? openremoteVersion : "0.0.0"
 
 configurations.all {
     resolutionStrategy {
@@ -157,6 +156,25 @@ repositories {
         url "https://s01.oss.sonatype.org/content/repositories/snapshots"
     }
 }
+
+// Configure version based on Git tags
+apply plugin: 'pl.allegro.tech.build.axion-release'
+scmVersion {
+    releaseOnlyOnReleaseBranches = true
+    releaseBranchNames = ['main', 'master', 'master-mine']
+    unshallowRepoOnCI.set(true)
+    versionCreator('simple')
+    versionIncrementer('incrementMinor')
+    repository {
+        remote.set('origin')
+    }
+    tag {
+        prefix.set('')
+        deserializer({config, position, tagName -> tagName.startsWith('v') ? '1.1.0' : tagName})
+        initialVersion({config, position -> '1.2.0'})
+    }
+}
+version = scmVersion.version
 
 // Eclipse needs help
 apply plugin: "eclipse"
@@ -397,24 +415,6 @@ plugins.withType(JavaPlugin).whenPluginAdded {
 
     // JAR/ZIP base name is the fully qualified subproject name
     archivesBaseName = "${rootProject.name}${path.replaceAll(":", "-")}"
-}
-
-apply plugin: 'pl.allegro.tech.build.axion-release'
-
-scmVersion {
-    releaseOnlyOnReleaseBranches = true
-    releaseBranchNames = ['main', 'master', 'master-mine']
-    unshallowRepoOnCI.set(true)
-    versionCreator('simple')
-    versionIncrementer('incrementMinor')
-    repository {
-        remote.set('origin')
-    }
-    tag {
-        prefix.set('')
-        deserializer({config, position, tagName -> tagName.startsWith('v') ? '1.1.0' : tagName})
-        initialVersion({config, position -> '1.2.0'})
-    }
 }
 
 // POM generator
