@@ -251,6 +251,7 @@ jobs:
           sparse-checkout: |
             .ci_cd
             profile
+          sparse-checkout-cone-mode: false
 
       - name: List openremote dir files
         id: list-openremote-files
