@@ -252,6 +252,12 @@ jobs:
             .ci_cd
             profile
 
+      - name: List openremote dir files
+        id: list-openremote-files
+        if: ${{ steps.is_main_repo.outputs.value == 'false' }}
+        run: |
+          find openremote
+
       - name: Check deployment build.gradle
         id: check_deployment_gradle
         uses: andstor/file-existence-action@v3
