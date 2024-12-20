@@ -257,7 +257,12 @@ jobs:
         id: list-openremote-files
         if: ${{ steps.is_main_repo.outputs.value == 'false' }}
         run: |
+          echo "IS_CUSTOM_PROJECT: ${IS_CUSTOM_PROJECT}"
+          echo "IS_MAIN_REPO: ${IS_MAIN_REPO}"
           find openremote
+        env:
+          IS_CUSTOM_PROJECT: ${{ steps.is_main_repo.outputs.value == 'false' }}
+          IS_MAIN_REPO: ${{ steps.is_main_repo.outputs.value }}
 
       - name: Check deployment build.gradle
         id: check_deployment_gradle
