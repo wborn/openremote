@@ -285,7 +285,7 @@ jobs:
         id: get-version-details
         run: |
           versionWithQualifier=$(./gradlew currentVersion | grep "Project version" | sed 's#Project version: ##')
-          version=$(sed -E 's#-.+##' <<< $version)
+          version=$(sed -E 's#-.+##' <<< $versionWithQualifier)
           isRelease=false
           if [ "$version" == "versionWithQualifier" ]; then
             isRelease=true
