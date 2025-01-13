@@ -742,7 +742,7 @@ jobs:
       - name: Run manager docker build command
         if: steps.manager-docker-command.outputs.value != ''
         run: |
-          ${{ steps.manager-docker-command.outputs.value }}
+          echo ${{ steps.manager-docker-command.outputs.value }}
 
       - name: Scan manager docker image
         if: steps.manager-docker-command.outputs.value != ''
@@ -770,7 +770,7 @@ jobs:
       - name: Run maven publish command
         if: steps.maven-publish-command.outputs.value != ''
         run: |
-          ${{ steps.maven-publish-command.outputs.value }}
+          echo ${{ steps.maven-publish-command.outputs.value }}
 
       - name: Run frontend tests
         if: steps.test-ui-command.outputs.value != ''
@@ -827,7 +827,7 @@ jobs:
           echo '  "https://registry.yarnpkg.com":' >> .yarnrc.yml
           echo "    npmAuthToken: $NPM_AUTH_TOKEN" >> .yarnrc.yml
 
-          yarn workspaces foreach --all --no-private --topological npm publish --tag $TAG
+          echo yarn workspaces foreach --all --no-private --topological npm publish --tag $TAG
         env:
           NPM_TAG: ${{ steps.ci-cd-output.outputs.npmTag }}
           NPM_AUTH_TOKEN: ${{ steps.inputs-and-secrets.outputs._TEMP_NPM_AUTH_TOKEN }}
