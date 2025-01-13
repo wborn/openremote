@@ -281,6 +281,20 @@ jobs:
         env:
           IS_MAIN_REPO: ${{ steps.is_main_repo.outputs.value }}
 
+      - name: Get version details
+        id: get-version-details
+        run: |
+          versionWithQualifier=$(./gradlew currentVersion | grep "Project version" | sed 's#Project version: ##')
+          version=$(sed -E 's#-.+##' <<< $version)
+          isRelease=false
+          if [ "$version" == "versionWithQualifier" ]; then
+            isRelease=true
+          fi
+
+          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "version_with_qualifier=$versionWithQualifier" >> $GITHUB_OUTPUT
+          echo "is_release=$isRelease" >> $GITHUB_OUTPUT
+
       # For scheduled execution from custom projects we need to be able to determine if the manager docker image has
       # changed since the last execution, we do this using a cache
       - name: Get docker tags to monitor
@@ -336,6 +350,7 @@ jobs:
           refName = os.getenv('GITHUB_REF_NAME')
           refType = os.getenv('GITHUB_REF_TYPE')
           isMainRepo = os.getenv('IS_MAIN_REPO')
+          version = os.getenv('VERSION')
           deploys = None
           dockerPublishTags = None
           mavenPublishTag = None
@@ -387,24 +402,19 @@ jobs:
 
             elif eventName == "push" and refType == "branch" and refName in eventConfig:
               eventConfig = eventConfig[refName]
-              if eventConfig is not None:
-                deploys = eventConfig['deploy'] if 'deploy' in eventConfig else None
-                if 'distribute' in eventConfig and 'docker' in eventConfig['distribute']:
-                  dockerPublishTags = eventConfig['distribute']['docker']
 
-            elif eventName == "release":
-              if eventConfig is not None:
-                deploys = eventConfig['deploy'] if 'deploy' in eventConfig else {}
-                if 'distribute' in eventConfig:
-                  if 'docker' in eventConfig['distribute']:
-                     dockerPublishTags = eventConfig['distribute']['docker']
-                  if 'maven' in eventConfig['distribute']:
-                     mavenPublishTag = eventConfig['distribute']['maven']
-                  if 'npm' in eventConfig['distribute']:
-                     npmPublishTag = eventConfig['distribute']['npm']
+          if eventConfig is not None:
+            deploys = eventConfig['deploy'] if 'deploy' in eventConfig else None
+            if 'distribute' in eventConfig:
+              if 'docker' in eventConfig['distribute']:
+                 dockerPublishTags = eventConfig['distribute']['docker']
+              if 'maven' in eventConfig['distribute']:
+                 mavenPublishTag = eventConfig['distribute']['maven']
+              if 'npm' in eventConfig['distribute']:
+                 npmPublishTag = eventConfig['distribute']['npm']
 
           if dockerPublishTags is not None and isMainRepo == 'true':
-            dockerPublishTags = dockerPublishTags.replace("$version", refName)
+            dockerPublishTags = dockerPublishTags.replace("$version", version)
             firstDockerTag = dockerPublishTags.split(",")[0]
             os.system(f"echo 'firstDockerTag={firstDockerTag}' >> $GITHUB_OUTPUT")
             os.system(f" echo 'Manager tags to push to docker: {dockerPublishTags}'")
@@ -412,12 +422,12 @@ jobs:
             os.system(f"echo 'dockerTags={dockerPublishTags}' >> $GITHUB_OUTPUT")
 
           if mavenPublishTag is not None and isMainRepo == 'true':
-            mavenPublishTag = mavenPublishTag.replace("$version", refName)
+            mavenPublishTag = mavenPublishTag.replace("$version", version)
             os.system(f" echo 'Maven publish version: {mavenPublishTag}'")
             os.system(f"echo 'mavenTag={mavenPublishTag}' >> $GITHUB_OUTPUT")
 
           if npmPublishTag is not None and isMainRepo == 'true':
-            npmPublishTag = npmPublishTag.replace("$version", refName)
+            npmPublishTag = npmPublishTag.replace("$version", version)
             os.system(f" echo 'npm publish version: {npmPublishTag}'")
             os.system(f"echo 'npmTag={npmPublishTag}' >> $GITHUB_OUTPUT")
 
@@ -447,6 +457,7 @@ jobs:
             os.system(f"echo 'deploys={deployStr}' >> $GITHUB_OUTPUT")
         env:
           IS_MAIN_REPO: ${{ steps.is_main_repo.outputs.value }}
+          VERSION: ${{ steps.get-version-details.outputs.version }}
 
       - name: Copy new tag cache to old
         if: ${{ steps.check_cicd_json.outputs.files_exists == 'true' }}
@@ -617,6 +628,12 @@ jobs:
           echo 'Trigger event: ${{ github.event_name }}'
           echo 'Is main repo: ${{ steps.is_main_repo.outputs.value == 'true' }}'
           echo 'Has deployment dockerfile: ${{ steps.check_deployment_dockerfile.outputs.files_exists == 'true' }}'
+
+          echo 'Version: ${{ steps.get-version-details.outputs.version }}'
+          echo 'Docker publish tag: ${{ steps.ci-cd-output.outputs.dockerTags }}'
+          echo 'Maven publish tag: ${{ steps.ci-cd-output.outputs.mavenTag }}'
+          echo 'NPM publish tag: ${{ steps.ci-cd-output.outputs.npmTag }}'
+          
           echo 'Manager commit SHA: ${{ steps.manager-docker-command.outputs.refTag }}'
           echo 'Deployment commit SHA: ${{ steps.deployment-docker-command.outputs.refTag }}'
           echo 'Deployments: ${{ steps.deployments.outputs.value }}'
@@ -743,29 +760,6 @@ jobs:
         if: steps.manager-docker-command.outputs.value != ''
         run: |
           echo ${{ steps.manager-docker-command.outputs.value }}
-
-      - name: Scan manager docker image
-        if: steps.manager-docker-command.outputs.value != ''
-        uses: anchore/scan-action@v3
-        id: manager-anchore-scan
-        with:
-          image: ${{ steps.manager-docker-command.outputs.managerDockerImage }}
-          fail-build: false
-          severity-cutoff: critical
-
-      - name: Upload Anchore scan SARIF report
-        if: |
-          !cancelled() &&
-          steps.manager-docker-command.outputs.value != ''
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: ${{ steps.manager-anchore-scan.outputs.sarif }}
-
-      - name: Inspect Anchore scan SARIF report
-        if: |
-          !cancelled() &&
-          steps.manager-docker-command.outputs.value != ''
-        run: cat ${{ steps.manager-anchore-scan.outputs.sarif }}
 
       - name: Run maven publish command
         if: steps.maven-publish-command.outputs.value != ''
